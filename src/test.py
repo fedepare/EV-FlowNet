@@ -10,6 +10,7 @@ from data_loader import get_loader
 from eval_utils import *
 from model import *
 from vis_utils import *
+import matplotlib.pyplot as plt
 
 def drawImageTitle(img, title):
     cv2.putText(img,
@@ -47,6 +48,7 @@ def test(sess,
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
+    idx = 0
     max_flow_sum = 0
     min_flow_sum = 0
     iters = 0
@@ -138,12 +140,23 @@ def test(sess,
         # Prep outputs for nice visualization.
         if args.test_plot:
             pred_flow_rgb = flow_viz_np(pred_flow[..., 0], pred_flow[..., 1])
+
+            f, axarr = plt.subplots(1, 1, figsize=(12, 12))
+            axarr.imshow(pred_flow_rgb)
+            axarr.set_yticklabels([])
+            axarr.set_xticklabels([])
+            axarr.get_xaxis().set_ticks([])
+            axarr.get_yaxis().set_ticks([])
+            extent = axarr.get_window_extent().transformed(f.dpi_scale_trans.inverted())
+            f.savefig('../results/disk_counter/' + str(idx) + '.png', bbox_inches=extent)
+            idx += 1
+
             pred_flow_rgb = drawImageTitle(pred_flow_rgb, 'Predicted Flow')
             
             event_time_image = np.squeeze(np.amax(event_image[..., 2:], axis=-1))
             event_time_image = (event_time_image * 255 / event_time_image.max()).astype(np.uint8)
             event_time_image = np.tile(event_time_image[..., np.newaxis], [1, 1, 3])
-            
+
             event_count_image = np.tile(event_count_image[..., np.newaxis], [1, 1, 3])
 
             event_time_image = drawImageTitle(event_time_image, 'Timestamp Image')
@@ -197,8 +210,8 @@ def main():
     event_image_loader, prev_image_loader, next_image_loader, timestamp_loader, n_ima = get_loader(
         args.data_path,
         1,
-        args.image_width,
-        args.image_height,
+        128,
+        128,
         split='test',
         shuffle=False,
         sequence=args.test_sequence,

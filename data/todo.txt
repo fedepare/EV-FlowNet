@@ -1,0 +1,2 @@
+python fede.py --prefix fede2 --output_folder mvsec_data/
+
