@@ -28,7 +28,8 @@ def test(sess,
          event_image_loader,
          prev_image_loader,
          next_image_loader,
-         timestamp_loader):
+         timestamp_loader, 
+         path_to):
     global_step = tf.train.get_or_create_global_step()
     with tf.variable_scope('vs'):
         flow_dict = model(event_image_loader,
@@ -148,7 +149,7 @@ def test(sess,
             axarr.get_xaxis().set_ticks([])
             axarr.get_yaxis().set_ticks([])
             extent = axarr.get_window_extent().transformed(f.dpi_scale_trans.inverted())
-            f.savefig('../results/disk_counter/' + str(idx) + '.png', bbox_inches=extent)
+            f.savefig(path_to + str(idx) + '.png', bbox_inches=extent)
             idx += 1
 
             pred_flow_rgb = drawImageTitle(pred_flow_rgb, 'Predicted Flow')
@@ -210,14 +211,18 @@ def main():
     event_image_loader, prev_image_loader, next_image_loader, timestamp_loader, n_ima = get_loader(
         args.data_path,
         1,
-        128,
-        128,
+        256,
+        256,
         split='test',
         shuffle=False,
         sequence=args.test_sequence,
         skip_frames=args.test_skip_frames,
         time_only=args.time_only,
         count_only=args.count_only)
+
+    path_to = '../results/' + args.test_sequence + '/'
+    if os.path.isdir(path_to): os.system('rm -rf ' + path_to)
+    os.system('mkdir ' + path_to)
 
     if not args.load_path:
         raise Exception("You need to set `load_path` and `training_instance`.")
@@ -228,7 +233,8 @@ def main():
          event_image_loader,
          prev_image_loader,
          next_image_loader,
-         timestamp_loader)
+         timestamp_loader, 
+         path_to)
     sess.close()
 
 

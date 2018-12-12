@@ -104,12 +104,6 @@ def main():
     parser = argparse.ArgumentParser(
         description=("Extracts grayscale and event images from a ROS bag and "
                      "saves them as TFRecords for training in TensorFlow."))
-    parser.add_argument("--prefix", dest="prefix",
-                        help="Output file prefix.",
-                        required=True)
-    parser.add_argument("--output_folder", dest="output_folder",
-                        help="Output folder.",
-                        required=True)
     parser.add_argument("--max_aug", dest="max_aug",
                         help="Maximum number of images to combine for augmentation.",
                         type=int,
@@ -144,22 +138,26 @@ def main():
     right_event_time_images = []
     right_event_image_times = []
     
-    cols = 240
-    rows = 180
-    image_separation = 100 # ms
+    cols = 320
+    rows = 264
+    image_separation = 5 # ms
     prev_image_time = 0
 
-    f = open('counter.csv', 'r')
-    reader = csv.reader(f)
-    print("Processing event file")
+    path_from = 'roadmap.csv'
+    path_to = 'mvsec_data/' + path_from.split('.')[0] + '/'
+    if os.path.isdir(path_to): os.system('rm -rf ' + path_to)
+    os.system('mkdir ' + path_to)
 
     left_tf_writer = tf.python_io.TFRecordWriter(
-        os.path.join(args.output_folder, args.prefix, "left_event_images.tfrecord"))
+        os.path.join(path_to, "left_event_images.tfrecord"))
     right_tf_writer = tf.python_io.TFRecordWriter(
-        os.path.join(args.output_folder, args.prefix, "right_event_images.tfrecord"))
+        os.path.join(path_to, "right_event_images.tfrecord"))
 
     idx = 0
     start = True
+    f = open(path_from, 'r')
+    reader = csv.reader(f)
+    print("Processing event file")
     for row in reader:
 
       # read time
@@ -179,10 +177,7 @@ def main():
 
       # image statistics (images have to be separated)
       if (time - prev_image_time) > image_separation * 1000:
-        cv2.imwrite(os.path.join(args.output_folder,
-                                         args.prefix,
-                                         "left_image{:05d}.png".format(left_image_iter)),
-                                         np.zeros((rows, cols)))
+        cv2.imwrite(os.path.join(path_to, "left_image{:05d}.png".format(left_image_iter)), np.zeros((rows, cols)))
         if left_image_iter > 0: left_image_times.append(time)          
         left_image_iter += 1
         prev_image_time = time
@@ -206,15 +201,13 @@ def main():
                                              args.max_aug,
                                              args.n_skip,
                                              left_event_image_iter, 
-                                             args.prefix, 
+                                             path_from.split('.')[0], 
                                              'left',
                                              left_tf_writer,
                                              t_start_ros)
 
-      # if idx > 250: break
-
     left_tf_writer.close()    
-    image_counter_file = open(os.path.join(args.output_folder, args.prefix, "n_images.txt") , 'w')
+    image_counter_file = open(os.path.join(path_to, "n_images.txt") , 'w')
     image_counter_file.write("{} {}".format(left_event_image_iter, right_event_image_iter))
     image_counter_file.close()         
     
