@@ -138,12 +138,17 @@ def main():
     right_event_time_images = []
     right_event_image_times = []
     
-    cols = 320
-    rows = 264
+    cols = 240
+    rows = 180
     image_separation = 5 # ms
     prev_image_time = 0
 
-    path_from = 'roadmap.csv'
+    flip_vertically = False
+    flip_horizontally = False
+
+    ts_scaling = 1.e6
+
+    path_from = 'boxes_6dof_25.csv'
     path_to = 'mvsec_data/' + path_from.split('.')[0] + '/'
     if os.path.isdir(path_to): os.system('rm -rf ' + path_to)
     os.system('mkdir ' + path_to)
@@ -160,6 +165,12 @@ def main():
     print("Processing event file")
     for row in reader:
 
+      row[0] = float(row[0])
+      row[0] *= ts_scaling
+
+      row[1] = 0 + int(row[1]) / 1
+      row[2] = 0 + int(row[2]) / 1
+
       # read time
       if start == True: 
         t_start = float(row[0]) / 1000000. # s
@@ -174,6 +185,12 @@ def main():
       ts = float(row[0])
       time = ts
       event = [int(row[1]), int(row[2]), (ts - t_start_ros) / 1000000., (float(row[3]) - 0.5) * 2]
+
+      # flip data
+      if flip_vertically:
+        event[1] = event[1] + 2 * (rows / 2 - event[1]) - 1
+      if flip_horizontally:
+        event[0] = event[0] + 2 * (cols / 2 - event[0]) - 1
 
       # image statistics (images have to be separated)
       if (time - prev_image_time) > image_separation * 1000:

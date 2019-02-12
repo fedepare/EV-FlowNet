@@ -211,8 +211,8 @@ def main():
     event_image_loader, prev_image_loader, next_image_loader, timestamp_loader, n_ima = get_loader(
         args.data_path,
         1,
-        256,
-        256,
+        128,
+        128,
         split='test',
         shuffle=False,
         sequence=args.test_sequence,
